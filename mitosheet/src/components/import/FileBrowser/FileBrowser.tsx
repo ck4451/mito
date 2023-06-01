@@ -12,8 +12,9 @@ import DefaultTaskpaneBody from '../../taskpanes/DefaultTaskpane/DefaultTaskpane
 import DefaultTaskpaneFooter from '../../taskpanes/DefaultTaskpane/DefaultTaskpaneFooter';
 import DefaultTaskpaneHeader from '../../taskpanes/DefaultTaskpane/DefaultTaskpaneHeader';
 import { FileElement, ImportState } from '../../taskpanes/FileImport/FileImportTaskpane';
-import { getElementsToDisplay, getFileEnding, getFilePath, getImportButtonStatus, isExcelFile } from '../../taskpanes/FileImport/importUtils';
+import { getElementsToDisplay, getFilePath, getImportButtonStatus } from '../../taskpanes/FileImport/importUtils';
 import FileBrowserBody, { FileBrowserState } from './FileBrowserBody';
+import { getFileEnding, isExcelFile } from '../../../utils/paths';
 
 interface FileBrowserProps {
     mitoAPI: MitoAPI;

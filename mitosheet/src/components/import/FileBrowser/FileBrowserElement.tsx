@@ -13,8 +13,9 @@ import Row from '../../layout/Row';
 import {
     FileElement, ImportState
 } from '../../taskpanes/FileImport/FileImportTaskpane';
-import { getFilePath, getInvalidFileError, isExcelFile } from '../../taskpanes/FileImport/importUtils';
+import { getFilePath, getInvalidFileError } from '../../taskpanes/FileImport/importUtils';
 import { FileBrowserState } from './FileBrowserBody';
+import { isExcelFile } from '../../../utils/paths';
 
 
 interface FileBrowserElementProps {

@@ -9,6 +9,8 @@ from typing import Any, Dict, List, Optional
 import platform
 import string
 
+from mitosheet.errors import get_recent_traceback
+
 def get_path_modified(path: str, f: str) -> Optional[float]:
     """
     For a path, returns when it was last modified. If that path is unaccessible, 
@@ -90,7 +92,11 @@ def get_path_contents(params: Dict[str, Any]) -> str:
     """ 
     path_parts = params['path_parts']
 
-    # Join the path and normalize it (note this should be OS independent)
+    # Join the path and normalize it (note this should be OS independent). If it starts with a ., then
+    # we replace it with the current working directory
+    if path_parts[0] == '.':
+        path_parts[0] = os.getcwd()
+
     path = os.path.join(*path_parts)
     path = os.path.normpath(path)
 
@@ -143,6 +149,7 @@ def get_path_contents(params: Dict[str, Any]) -> str:
             {'name': d, 'isDirectory': True, 'lastModified': get_path_modified(path, d)} for d in dirnames
         ]
     })
+
     
     
     

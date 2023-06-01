@@ -10,10 +10,11 @@ import SortArrowIcon from '../../icons/SortArrowIcon';
 import Col from '../../layout/Col';
 import Row from '../../layout/Row';
 import { FileElement, ImportState } from '../../taskpanes/FileImport/FileImportTaskpane';
-import { getElementsToDisplay, getFilePath, inRootFolder, isExcelFile } from '../../taskpanes/FileImport/importUtils';
+import { getElementsToDisplay, getFilePath } from '../../taskpanes/FileImport/importUtils';
 import { TaskpaneType } from '../../taskpanes/taskpanes';
 import FileBrowserElement from './FileBrowserElement';
 import FileBrowserPathSelector from './FileBrowserPathSelector';
+import { inRootFolder, isExcelFile, isPathFromRoot, isPathToFolder, splitPathToPartsIgnoringFileIfExists } from '../../../utils/paths';
 
 
 export interface PathContents {
@@ -59,18 +60,6 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
     // Filter to the searched for elements, and then sort properly
     const elementsToDisplay = getElementsToDisplay(props.fileBrowserState);
     const selectedFile: FileElement | undefined = elementsToDisplay[props.fileBrowserState.selectedElementIndex];
-
-    useEffect(() => {
-        // When the user switches folders, reset the search
-        props.setFileBrowserState(prevImportState => {
-            return {
-                ...prevImportState,
-                searchString: ''
-            }
-        })
-        // Also, focus on the search so we can start typing immediately
-        inputRef.current?.focus()
-    }, [props.fileBrowserState.pathContents.path_parts])
 
     // We make sure to always focus back on the search input after the selected
     // element changes; this is because if the user clicks on a different element
@@ -144,8 +133,33 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
                     ref={inputRef}
                     value={props.fileBrowserState.searchString}
                     placeholder='Search the current folder'
-                    onChange={(e) => {
+                    onChange={async (e) => {
                         const newSearchString = e.target.value;
+
+                        // If we navigate to a folder, we need to update the path parts, not including the final file
+                        if (isPathToFolder(newSearchString)) {
+                            // First, we find the common ancestor of the current 
+                            const currentPathParts = props.fileBrowserState.pathContents.path_parts;
+                            let newSearchPathParts = []
+
+                            if (isPathFromRoot(newSearchString)) {
+                                newSearchPathParts = splitPathToPartsIgnoringFileIfExists(newSearchString);
+                            } else {
+                                // Append the current path parts to the new search path parts, if this is a path
+                                // from the current folder
+                                newSearchPathParts = [...currentPathParts, ...splitPathToPartsIgnoringFileIfExists(newSearchString)];                                
+                            }
+
+                            console.log("CURRENT PATH", currentPathParts)
+                            console.log("NEW PATH", newSearchPathParts)
+
+                            // Only update the path if it is different
+                            if (currentPathParts.join('/') !== newSearchPathParts.join('/')) {
+                                props.setCurrPathParts(newSearchPathParts);
+                            }
+
+                        }
+
                         props.setFileBrowserState(prevImportState => {
                             return {
                                 ...prevImportState,
@@ -203,6 +217,20 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
                                 } else {
                                     void props.importCSVFile(selectedFile);
                                 }
+                            }
+                        } else if (e.key === 'Tab') {
+                            // If it's a tab, and we're selected on a folder that isn't the parent folder, and then
+                            // we clear the search string 
+                            if (selectedFile && selectedFile.isDirectory && !selectedFile.isParentDirectory) {
+                                const newPathParts = props.fileBrowserState.pathContents.path_parts || [];
+                                newPathParts.push(selectedFile.name);
+                                props.setCurrPathParts(newPathParts);
+                                props.setFileBrowserState(prevImportState => {
+                                    return {
+                                        ...prevImportState,
+                                        searchString: ''
+                                    }
+                                })
                             }
                         }
                     }}

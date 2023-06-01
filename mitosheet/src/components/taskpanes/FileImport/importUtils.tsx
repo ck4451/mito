@@ -1,26 +1,13 @@
 import MitoAPI from "../../../jupyter/api";
 import { UserProfile } from "../../../types";
 import { isAtLeastBenchmarkVersion, isExcelImportEnabled } from "../../../utils/packageVersion";
+import { getFileEnding, inRootFolder } from "../../../utils/paths";
 import { fuzzyMatch } from "../../../utils/strings";
 import { FileBrowserState } from "../../import/FileBrowser/FileBrowserBody";
 import { FileElement } from "./FileImportTaskpane";
 
 const PARENT_FOLDER_NAME = 'Parent Folder';
 
-
-/* 
-    Helper function that gets an ending of a file, or
-    undefined if no such file ending exists
-*/
-export const getFileEnding = (elementName: string): string | undefined => {
-    try {
-        // Take just the file ending
-        const nameSplit = elementName.split('.');
-        return nameSplit[nameSplit.length - 1];
-    } catch {
-        return undefined;
-    }
-}
 
 
 /* 
@@ -112,11 +99,6 @@ export const getImportButtonStatus = (selectedElement: FileElement | undefined, 
     };
 }
 
-export const isExcelFile = (element: FileElement | undefined): boolean => {
-    return element !== undefined && !element?.isDirectory && 
-        (element?.name.toLowerCase().endsWith('.xlsx') ||
-        element?.name.toLowerCase().endsWith('.xlsm'))
-}
 
 export const getElementsToDisplay = (importState: FileBrowserState): FileElement[] => {
 
@@ -132,9 +114,12 @@ export const getElementsToDisplay = (importState: FileBrowserState): FileElement
         })
     }
 
+    // Get only the file name from the search string, which may be a path
+    const filename = importState.searchString.split(/[\\/]/).pop() ?? importState.searchString;
+
     // Filter to what is searched for
     const searchedElements = allElements.filter(element => {
-        return fuzzyMatch(element.name, importState.searchString) > .8;
+        return fuzzyMatch(element.name, filename) > .8;
     });
 
     // Sort (making sure to keep the parent folder at the top, no matter what
@@ -157,11 +142,6 @@ export const getElementsToDisplay = (importState: FileBrowserState): FileElement
             return elementOne.lastModified >= elementTwo.lastModified ? -1 : 1;
         }
     })
-}
-
-export const inRootFolder = (pathParts: string[]): boolean => {
-    pathParts = pathParts.filter(pathPart => pathPart !== '')
-    return pathParts.length === 1 && (pathParts[0] === '/' || pathParts[0] === '\\');
 }
 
 
