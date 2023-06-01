@@ -14,7 +14,7 @@ import { getElementsToDisplay, getFilePath } from '../../taskpanes/FileImport/im
 import { TaskpaneType } from '../../taskpanes/taskpanes';
 import FileBrowserElement from './FileBrowserElement';
 import FileBrowserPathSelector from './FileBrowserPathSelector';
-import { inRootFolder, isExcelFile, isPathFromRoot, isPathToFolder, splitPathToPartsIgnoringFileIfExists } from '../../../utils/paths';
+import { getFileName, inRootFolder, isExcelFile, isPathFromRoot, isPathToFolder, splitPathToPartsIgnoringFileIfExists } from '../../../utils/paths';
 
 
 export interface PathContents {
@@ -156,6 +156,12 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
                             // Only update the path if it is different
                             if (currentPathParts.join('/') !== newSearchPathParts.join('/')) {
                                 props.setCurrPathParts(newSearchPathParts);
+
+                                // So that we don't have to deal with accidently doublly entering folders, we keep only
+                                // the file part of the search string
+                                const fileName = getFileName(newSearchString);
+                                props.setFileBrowserState(prevImportState => {return {...prevImportState, searchString: fileName ?? ''}})
+                                return;
                             }
 
                         }
@@ -186,7 +192,7 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
                                 }
                             })
                             e.preventDefault();
-                        } else if (e.key === 'Enter') {
+                        } else if (e.key === 'Enter' || e.key === 'Tab') {
                             if (!selectedFile) {
                                 return;
                             }
@@ -195,10 +201,14 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
                                 const newPathParts = [...props.fileBrowserState.pathContents.path_parts];
                                 newPathParts.pop()
                                 props.setCurrPathParts(newPathParts);
+                                props.setFileBrowserState(prevImportState => {return {...prevImportState, searchString: ''}})
+
                             } else if (selectedFile.isDirectory) {
                                 const newPathParts = props.fileBrowserState.pathContents.path_parts || [];
                                 newPathParts.push(selectedFile.name);
                                 props.setCurrPathParts(newPathParts);
+                                props.setFileBrowserState(prevImportState => {return {...prevImportState, searchString: ''}})
+
                             } else {
                                 if (isExcelFile(selectedFile)) {
                                     const openExcelImport = async () => {
@@ -217,20 +227,6 @@ function FileBrowserBody(props: FileBrowserProps): JSX.Element {
                                 } else {
                                     void props.importCSVFile(selectedFile);
                                 }
-                            }
-                        } else if (e.key === 'Tab') {
-                            // If it's a tab, and we're selected on a folder that isn't the parent folder, and then
-                            // we clear the search string 
-                            if (selectedFile && selectedFile.isDirectory && !selectedFile.isParentDirectory) {
-                                const newPathParts = props.fileBrowserState.pathContents.path_parts || [];
-                                newPathParts.push(selectedFile.name);
-                                props.setCurrPathParts(newPathParts);
-                                props.setFileBrowserState(prevImportState => {
-                                    return {
-                                        ...prevImportState,
-                                        searchString: ''
-                                    }
-                                })
                             }
                         }
                     }}

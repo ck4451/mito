@@ -99,10 +99,14 @@ function FileBrowserElement(props: FileBrowserElementProps): JSX.Element {
                     const newPathParts = [...props.fileBrowserState.pathContents.path_parts];
                     newPathParts.pop()
                     props.setCurrPathParts(newPathParts);
+                    props.setFileBrowserState(prevImportState => {return {...prevImportState, searchString: ''}})
+
                 } else if (props.element.isDirectory) {
                     const newPathParts = props.fileBrowserState.pathContents.path_parts || [];
                     newPathParts.push(props.element.name);
                     props.setCurrPathParts(newPathParts);
+                    props.setFileBrowserState(prevImportState => {return {...prevImportState, searchString: ''}})
+
                 } else {
                     
                     if (isExcelFile(props.element)) {

@@ -30,7 +30,16 @@ export const getFileEnding = (elementName: string): string | undefined => {
 }
 
 export const isPathToFolder = (path: string): boolean => {
-    return path.endsWith('/') || path.endsWith('\\');
+    if (path.endsWith('/') || path.endsWith('\\')) {
+        return true
+    }
+
+    // If it is a path that includes a file at the end, this is also a path to a folder!
+    if ((path.includes('/') || path.includes('\\')) && getFileEnding(path) !== undefined) {
+        return true;
+    }
+
+    return false;
 }
 
 export const isPathFromRoot = (path: string): boolean => {
@@ -64,4 +73,17 @@ export const splitPathToPartsIgnoringFileIfExists = (path: string): string[] => 
         pathParts.pop();
     }
     return pathParts;
+}
+
+
+export const getFileName = (path: string): string | undefined => {
+    const pathParts = splitPathToParts(path);
+    if (pathParts.length === 0) {
+        return '';
+    }
+    const final = pathParts[pathParts.length - 1];
+    if (final.includes('.')) {
+        return final;
+    }
+    return undefined;
 }
