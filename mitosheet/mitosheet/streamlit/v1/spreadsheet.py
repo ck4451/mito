@@ -80,7 +80,14 @@ try:
             return None
         return ctx.session_id
 
-    @st.cache_resource(hash_funcs={pd.DataFrame: get_dataframe_hash})
+    @st.cache_resource(
+        hash_funcs={pd.DataFrame: get_dataframe_hash},
+        # We have a max_entries of 20 because we don't want to cache too many
+        # MitoBackend objects, as they can be large. Notably, if the user has more
+        # than 20 Mito spreadsheets on the page, then we will not cache them -- but 
+        # I have a feeling that this will not be a common use case.
+        max_entries=20
+    )
     def _get_mito_backend(
             *args: Union[pd.DataFrame, str, None], 
             _importers: Optional[List[Callable]]=None, 
